@@ -10,7 +10,7 @@ object Project {
       .builder()
       .master("local[*]")
       .appName("SparkSessionForSimba")
-      .config("simba.join.partitions", "20")
+      .config("simba.index.partitions", "20")
       .getOrCreate()
 
     part1(simbaSession)
@@ -19,23 +19,22 @@ object Project {
   }
 
   private def part1(simba: SimbaSession): Unit = {
-    val names: Array[String] = Array("trajectoryIdentification", "objectIdentification", "longitude", "latitude", "time")
-    var df = simba.read.option("inferSchema", "true").csv("/home/pgiorgianni/Downloads/trajectories.csv")
+    var ds = simba.read.option("inferSchema", "true").csv("/home/pgiorgianni/Downloads/trajectories.csv")
+    ds = ds.withColumnRenamed("_c0", "trajectoryIdentification")
+    ds = ds.withColumnRenamed("_c1", "objectIdentification")
+    ds = ds.withColumnRenamed("_c2", "longitude")
+    ds = ds.withColumnRenamed("_c3", "latitude")
+    ds = ds.withColumnRenamed("_c4", "timeRead")
+
     println("---------------------------------------------------------")
-    df.printSchema()
-
-//    df.createOrReplaceTempView("a")
-
-//    simba.indexTable("a", RTreeType, "testtree",  Array("_c2", "_c3") )
-
-//    simba.showIndex("a")
-
-//    import simba.implicits._
-//    val caseClassDS = Seq(PointData(1.0, 1.0, 3.0, "1"),  PointData(2.0, 2.0, 3.0, "2"), PointData(2.0, 2.0, 3.0, "3"),
-//      PointData(2.0, 2.0, 3.0, "4"),PointData(3.0, 3.0, 3.0, "5"),PointData(4.0, 4.0, 3.0, "6")).toDS()
+    ds.printSchema()
+//    ds.createOrReplaceTempView("trajectory")
 //
-//    import simba.simbaImplicits._
-//    caseClassDS.knn(Array("x", "y"),Array(1.0, 1.0),4).show(4)
-
+//    simba.indexTable("trajectory", RTreeType, "testtree",  Array("longitude", "latitude") )
+//
+    import simba.simbaImplicits._
+    ds.range(Array("longitude", "latitude"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0)).show()
+    ds.circleRange(Array("longitude", "latitude"), Array(-322357.0, 4463408.0), 0.018018018).show()
+//    simba.showIndex("trajectory")
   }
 }

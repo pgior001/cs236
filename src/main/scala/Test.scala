@@ -7,14 +7,12 @@ object Test {
   case class PointData(x: Double, y: Double, z: Double, other: String)
 
   def main(args: Array[String]): Unit = {
-
     val simbaSession = SimbaSession
       .builder()
       .master("local[4]")
       .appName("SparkSessionForSimba")
       .config("simba.join.partitions", "20")
       .getOrCreate()
-
     runRangeQuery(simbaSession)
     runKnnQuery(simbaSession)
     runJoinQUery(simbaSession)

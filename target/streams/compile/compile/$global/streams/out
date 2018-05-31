@@ -1,4 +1,0 @@
-[0m[[0m[31merror[0m] [0m[0m/home/pgiorgianni/IdeaProjects/cs236.Simba/src/main/scala/Test.scala:29:17: value knn is not a member of org.apache.spark.sql.Dataset[Test.PointData][0m
-[0m[[0m[31merror[0m] [0m[0m    caseClassDS.knn(Array("x", "y"),Array(1.0, 1.0),4).show(4)[0m
-[0m[[0m[31merror[0m] [0m[0m                ^[0m
-[0m[[0m[31merror[0m] [0m[0mone error found[0m
