@@ -49,6 +49,7 @@ object Project {
 
     import simba.simbaImplicits._
     ds2.range(Array("longitude", "latitude"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0)).where("description LIKE \"amenity=restaurant\"").show()
-    ds.filter("date_format(timeRead, 'u') < 5").circleRange(Array("longitude", "latitude"), Array(-322357.0, 4463408.0), 1802.53).show()
+    //http://epsg.io/4799 shows that the unit of this system is a meter. so is should be good like this
+    ds.filter("date_format(timeRead, 'u') < 5").circleRange(Array("longitude", "latitude"), Array(-322357.0, 4463408.0), 2000).show()
   }
 }
