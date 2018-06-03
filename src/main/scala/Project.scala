@@ -43,15 +43,15 @@ object Project {
     ds2.createOrReplaceTempView("poi")
 
 //    simba.indexTable("trajectory", RTreeType, "testtree",  Array("longitude", "latitude") )
-//    simba.indexTable("poi", RTreeType, "poisIndex",  Array("longitude", "latitude") )
-//    simba.loadIndex("poisIndex", "/home/pgiorgianni/Downloads/POIsIndex")
+    simba.indexTable("poi", RTreeType, "poisIndex",  Array("longitude", "latitude") )
+    simba.loadIndex("poisIndex", "/home/pgiorgianni/Downloads/POIsIndex")
 //    simba.persistIndex("poisIndex", "/home/pgiorgianni/Downloads/POIsIndex")
 
     import simba.simbaImplicits._
     ds2.range(Array("longitude", "latitude"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0)).where("description LIKE \"amenity=restaurant\"").show()
 //    ds2.sqlContext.sql("SELECT * FROM trajectory WHERE POINT(longitude, latitude) IN RANGE(POINT(-339220.0,  4444725), POINT(-309375.0, 4478070.0))").show()
     //http://epsg.io/4799 shows that the unit of this system is a meter. so is should be good like this
-    var tmp = ds.filter("date_format(timeRead, 'u') < 5").circleRange(Array("longitude", "latitude"), Array(-322357.0, 4463408.0), 2000)
+    var tmp = ds.filter("date_format(timeRead, 'u') == 5").circleRange(Array("longitude", "latitude"), Array(-322357.0, 4463408.0), 2000)
     tmp.show()
 //    tmp.select("objectIdentification", "timeRead").groupBy("objectIdentification")
     println("------------------------------------------------------------------")
