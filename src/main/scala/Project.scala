@@ -44,7 +44,7 @@ object Project {
 
     ds2.createOrReplaceTempView("poi")
 
-//    simba.indexTable("trajectory", RTreeType, "testtree",  Array("x", "y") )
+//    simba.indexTable("trajectory", RTreeType, "testtree",  Array("x", "y"))
 //    simba.indexTable("poi", RTreeType, "poisIndex",  Array("x", "y") )
 //    simba.loadIndex("poisIndex", "/home/pgiorgianni/Downloads/POIsIndex")
 //    simba.persistIndex("poisIndex", "/home/pgiorgianni/Downloads/POIsIndex")
@@ -66,10 +66,9 @@ object Project {
     var count = tmp.count()
     var days = tmp.select("dow", "Year", "week", "hour").distinct().count()
     println("----------------------------- Visitors A Day -------------------------------")
-    println(count)
-    println(days)
-    println(count.asInstanceOf[Double]/(days * 24))
-//    simba.sql("Select MAX(timeRead) as max, MIN(timeRead) as min from trajectory").show()
+    println("people found in the area: " + count)
+    println("days tracked: " + days)
+    println("people/hours: " + count.asInstanceOf[Double]/(days * 24))
   }
 
   private def question3 (simba:SimbaSession): Unit = {
@@ -93,4 +92,4 @@ object Project {
     println("end in different: " + (selected - totalPoints))
   }
 
-}
+}i  
