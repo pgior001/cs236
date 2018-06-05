@@ -23,14 +23,14 @@ object Project {
   }
 
   private def part1(simba: SimbaSession): Unit = {
-    var ds = simba.read.option("inferSchema", "true").csv("/home/pgiorgianni/Downloads/trajectories.csv").cache
+    var ds = simba.read.option("inferSchema", "true").csv("/home/kjkamgar/Downloads/trajectories.csv").cache
     ds = ds.withColumnRenamed("_c0", "trajectoryIdentification")
     ds = ds.withColumnRenamed("_c1", "objectIdentification")
     ds = ds.withColumnRenamed("_c2", "x")
     ds = ds.withColumnRenamed("_c3", "y")
     ds = ds.withColumnRenamed("_c4", "timeRead")
 
-    var ds2 = simba.read.option("inferSchema", "true").csv("/home/pgiorgianni/Downloads/POIs.csv").cache
+    var ds2 = simba.read.option("inferSchema", "true").csv("/home/kjkamgar/Downloads/POIs.csv").cache
 
     ds2 = ds2.withColumnRenamed("_c0", "objectIdentification")
     ds2 = ds2.withColumnRenamed("_c1", "description")
@@ -95,10 +95,10 @@ object Project {
   }
 
   def question4(ds : SimbaSession) : Unit ={
-    var df = ds.sql("Select * from trajectories where date_format(timeRead,'m') <=  6 and date_format(timeread,'m') >= 2")
-
-    //ds2 = ds.select("*").from(ds).where("da <= 4 AND date >= 10")
-    //ds.select(Array("x","y")).from(ds).circlerangle(
+    import ds.simbaImplicits._
+    var df = ds.sql("Select x,y from trajectories where date_format(timeRead,'m') <=  6 and date_format(timeread,'m') >= 2")
+    var df2 = df.distinct()
+    df2.distanceJoin(df,Array("x","y"),Array("x","y"),20.0).groupBy("x","y").count().sort("count").show()
   }
 
   def question5(simba : SimbaSession) : Unit ={
