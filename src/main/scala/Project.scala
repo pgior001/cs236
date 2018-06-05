@@ -82,6 +82,7 @@ object Project {
       " Inner Join trajectory as tt on t.trajectoryIdentification = tt.trajectoryIdentification and (tt.timeRead = t.max or tt.timeRead = t.min)")
       .range(Array("x", "y"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0))
     tmp.show()
+    //he would prefer us to take the centroids of the involved points.
     var totalPoints = tmp.groupBy("trajectoryIdentification").count().where("count = 2").count()
     var selected = tmp.range(Array("x", "y"),Array(-339220, 4461397.5) ,Array(-324297.5, 4478070)).groupBy("trajectoryIdentification").count().where("count = 2").count()
     selected += tmp.range(Array("x", "y"),Array(-324297.5, 4461397.5) ,Array(-309375.0, 4478070)).groupBy("trajectoryIdentification").count().where("count = 2").count()
@@ -92,4 +93,4 @@ object Project {
     println("end in different: " + (selected - totalPoints))
   }
 
-}i  
+}
