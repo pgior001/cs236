@@ -16,7 +16,8 @@ object Project {
     part1(simbaSession)
 //    question1(simbaSession)
 //    question2(simbaSession)
-    question3(simbaSession)
+//    question3(simbaSession)
+    question5(simbaSession)
     simbaSession.stop()
     simbaSession.close()
   }
@@ -98,6 +99,13 @@ object Project {
 
     //ds2 = ds.select("*").from(ds).where("da <= 4 AND date >= 10")
     //ds.select(Array("x","y")).from(ds).circlerangle(
+  }
+
+  def question5(simba : SimbaSession) : Unit ={
+    import simba.simbaImplicits._
+    var poi = simba.sql("Select x as poix, y as poiy from poi")
+    var trajectories = simba.sql("Select * from trajectory where where date_format(timeRead, 'u') <= 5")
+    poi.distanceJoin(trajectories, Array("poix", "poiy"), Array("x", "y"), 100).groupBy("poix", "poiy").count().orderBy("count").show()
   }
 
 }
