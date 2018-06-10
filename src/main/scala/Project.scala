@@ -33,7 +33,7 @@ object Project {
   case class Data(trajectoryIdentification: Int, objectIdentification: Int, x: Double, y: Double, timeRead: String)
 
   private def part1(simba: SimbaSession): Unit = {
-    var ds = simba.read.option("inferSchema", "true").csv("/home/pgiorgianni/Downloads/trajectories.csv").cache
+    var ds = simba.read.option("inferSchema", "true").csv("/home/pgiorgianni/Downloads/tmp").cache
     ds = ds.withColumnRenamed("_c0", "trajectoryIdentification")
     ds = ds.withColumnRenamed("_c1", "objectIdentification")
     ds = ds.withColumnRenamed("_c2", "x")
@@ -54,8 +54,8 @@ object Project {
 
     ds2.createOrReplaceTempView("poi")
 
-//    simba.indexTable("trajectory", RTreeType, "trajectoriesIndex",  Array("x", "y"))
-//    simba.showIndex("trajectory")
+    simba.indexTable("trajectory", RTreeType, "trajectoriesIndex",  Array("x", "y"))
+    simba.showIndex("trajectory") 
 //    simba.sql("SELECT INDEX trajectoriesIndex")
 //    simba.indexTable("poi", RTreeType, "poisIndex",  Array("x", "y") )
 //    simba.sql("SELECT INDEX poisIndex")
