@@ -1,11 +1,10 @@
 import org.apache.spark.sql.simba.SimbaSession
 import org.apache.spark.sql.simba.index.RTreeType
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Column, Row}
+import org.apache.spark.sql.Row
 
 import scala.reflect.ClassTag
 import java.sql.Timestamp
-import java.util
 
 import scala.collection.mutable.ListBuffer
 
@@ -19,14 +18,14 @@ object Project {
       .builder()
       .master("local[*]")
       .appName("SparkSessionForSimba")
-      .config("simba.index.partitions", "50")
+      .config("simba.index.partitions", "30")
       .getOrCreate()
 
     part1(simbaSession)
 //    question1(simbaSession)
 //    question2(simbaSession)
 //    question3(simbaSession)
-//    question4(simbaSession)
+    question4(simbaSession)
 //    question5(simbaSession)
     simbaSession.stop()
     simbaSession.close()
@@ -44,11 +43,10 @@ object Project {
       var minX = 10000000.0
       var maxY = -10000000.0
       var minY = 10000000.0
-
-      input.foreach { elem =>
-        var x = elem.get(2).asInstanceOf[Double]
-        var y = elem.get(3).asInstanceOf[Double]
-
+      while(input.hasNext){
+        val elem = input.next()
+        val x = elem.getDouble(2)
+        val y = elem.getDouble(3)
         if (x > maxX)
           maxX = x
         if(minX > x)
@@ -58,7 +56,7 @@ object Project {
         if(minY > y)
           minY = y
       }
-      println( mbr(minX, minY, maxX, maxY).toString )
+//      println( mbr(minX, minY, maxX, maxY).toString )
       mbrList += mbr(minX, minY, maxX, maxY)
       this
     }
@@ -92,19 +90,17 @@ object Project {
 //    ds.printSchema()
 //    ds2.printSchema()
 
-    ds = ds.range(Array("x", "y"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0))
+    ds = ds.range(Array("x", "y"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0)).limit(240000)
+//    ds.show(24000)
+    ds.index( RTreeType, "trajectoriesIndex",  Array("x", "y"))
 
     ds.createOrReplaceTempView("trajectory")
 
     ds2.createOrReplaceTempView("poi")
 
-    simba.indexTable("trajectory", RTreeType, "trajectoriesIndex",  Array("x", "y"))
-    ds = simba.sql("Select * from trajectory")
-    val result = ds.toDF().mapPartitions(partition =>
-      Iterator(mbrs(ListBuffer()).addMbr(partition))).reduce((x,y) => x.merge(y))
-//    println(result.mbrList.size)
-//    simba.showIndex("trajectory")
-//    simba.sql("SELECT INDEX trajectoriesIndex")
+//    simba.indexTable("trajectory", RTreeType, "trajectoriesIndex",  Array("x", "y"))
+//    val result = ds.mapPartitions(partition =>
+//      Iterator(mbrs(ListBuffer()).addMbr(partition))).reduce((x,y) => x.merge(y))
 //    simba.indexTable("poi", RTreeType, "poisIndex",  Array("x", "y") )
 
     //    simba.loadIndex("poisIndex", "/home/pgiorgianni/Downloads/POIsIndex")
@@ -162,11 +158,11 @@ object Project {
     println("end in different: " + (selected - totalPoints))
   }
 
-  def question4(ds : SimbaSession) : Unit ={
-    import ds.simbaImplicits._
-    var df = ds.sql("Select x,y from trajectory where date_format(timeRead,'m') <=  6 and date_format(timeRead,'m') >= 2")
-    var df2 = df.distinct()
-    df2.distanceJoin(df,Array("x","y"),Array("x","y"),20.0).groupBy("x","y").count().sort(desc("count")).limit(20).show()
+  def question4(simba : SimbaSession) : Unit ={
+    import simba.simbaImplicits._
+    var df = simba.sql("Select x,y from trajectory where date_format(timeRead,'m') <=  6 and date_format(timeRead,'m') >= 2")
+    var df2 = simba.sql("Select x as x1,y as y1 from trajectory where date_format(timeRead,'m') <=  6 and date_format(timeRead,'m') >= 2").distinct()
+    df2.distanceJoin(df,Array("x1","y1"),Array("x","y"),20.0).groupBy("x1","y1").count().sort(desc("count")).limit(20).show()
   }
 
   def question5(simba : SimbaSession) : Unit ={
@@ -181,55 +177,55 @@ object Project {
       "Month", "year").distinct().cache()//.groupBy("poix", "poiy").count().sort(desc("count")).limit(20)
     var twoThousandAnd8 = solution.where("year = 2008").groupBy("id", "month").count().sort(desc("count")).select("id").cache()
     println("January 2008")
-    twoThousandAnd8.where("month = 1").show(10)
+    twoThousandAnd8.where("month = 1").limit(10).show(10)
     println("February 2008")
-    twoThousandAnd8.where("month = 2").show(10)
+    twoThousandAnd8.where("month = 2").limit(10).show(10)
     println("March 2008")
-    twoThousandAnd8.where("month = 3").show(10)
+    twoThousandAnd8.where("month = 3").limit(10).show(10)
     println("April 2008")
-    twoThousandAnd8.where("month = 4").show(10)
+    twoThousandAnd8.where("month = 4").limit(10).show(10)
     print("May 2008")
-    twoThousandAnd8.where("month = 5").show(10)
+    twoThousandAnd8.where("month = 5").limit(10).show(10)
     println("June 2008")
-    twoThousandAnd8.where("month = 6").show(10)
+    twoThousandAnd8.where("month = 6").limit(10).show(10)
     println("July 2008")
-    twoThousandAnd8.where("month = 7").show(10)
+    twoThousandAnd8.where("month = 7").limit(10).show(10)
     println("August 2008")
-    twoThousandAnd8.where("month = 8").show(10)
+    twoThousandAnd8.where("month = 8").limit(10).show(10)
     println("September 2008")
-    twoThousandAnd8.where("month = 9").show(10)
+    twoThousandAnd8.where("month = 9").limit(10).show(10)
     println("October 2008")
-    twoThousandAnd8.where("month = 10").show(10)
+    twoThousandAnd8.where("month = 10").limit(10).show(10)
     println("November 2008")
-    twoThousandAnd8.where("month = 11").show(10)
+    twoThousandAnd8.where("month = 11").limit(10).show(10)
     println("December 2008")
-    twoThousandAnd8.where("month = 12").show(10)
+    twoThousandAnd8.where("month = 12").limit(10).show(10)
 
     var twoThousandAnd9 = solution.where("year = 2009").groupBy("id", "month").count().sort(desc("count")).select("id").cache()
     println("January 2009")
-    twoThousandAnd9.where("month = 1").show(10)
+    twoThousandAnd9.where("month = 1").limit(10).show(10)
     println("February 2009")
-    twoThousandAnd9.where("month = 2").show(10)
+    twoThousandAnd9.where("month = 2").limit(10).show(10)
     println("March 2009")
-    twoThousandAnd9.where("month = 3").show(10)
+    twoThousandAnd9.where("month = 3").limit(10).show(10)
     println("April 2009")
-    twoThousandAnd9.where("month = 4").show(10)
+    twoThousandAnd9.where("month = 4").limit(10).show(10)
     print("May 2009")
-    twoThousandAnd9.where("month = 5").show(10)
+    twoThousandAnd9.where("month = 5").limit(10).show(10)
     println("June 2009")
-    twoThousandAnd9.where("month = 6").show(10)
+    twoThousandAnd9.where("month = 6").limit(10).show(10)
     println("July 2009")
-    twoThousandAnd9.where("month = 7").show(10)
+    twoThousandAnd9.where("month = 7").limit(10).show(10)
     println("August 2009")
-    twoThousandAnd9.where("month = 8").show(10)
+    twoThousandAnd9.where("month = 8").limit(10).show(10)
     println("September 2009")
-    twoThousandAnd9.where("month = 9").show(10)
+    twoThousandAnd9.where("month = 9").limit(10).show(10)
     println("October 2009")
-    twoThousandAnd9.where("month = 10").show(10)
+    twoThousandAnd9.where("month = 10").limit(10).show(10)
     println("November 2009")
-    twoThousandAnd9.where("month = 11").show(10)
+    twoThousandAnd9.where("month = 11").limit(10).show(10)
     println("December 2009")
-    twoThousandAnd9.where("month = 12").show(10)
+    twoThousandAnd9.where("month = 12").limit(10).show(10)
 
     //    solution.show(20)
   }
