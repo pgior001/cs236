@@ -5,6 +5,7 @@ import org.apache.spark.sql.{Column, Row}
 
 import scala.reflect.ClassTag
 import java.sql.Timestamp
+import java.util
 
 import scala.collection.mutable.ListBuffer
 
@@ -18,7 +19,7 @@ object Project {
       .builder()
       .master("local[*]")
       .appName("SparkSessionForSimba")
-      .config("simba.index.partitions", "20")
+      .config("simba.index.partitions", "50")
       .getOrCreate()
 
     part1(simbaSession)
@@ -32,42 +33,33 @@ object Project {
   }
 
   case class Data(trajectoryIdentification: Int, objectIdentification: Int, x: Double, y: Double, timeRead: Timestamp)
-  case class mbr(minX: Double, maxX: Double, minY: Double, maxY: Double)
+  case class mbr(minX: Double, miny: Double, maxX: Double, maxY: Double)
   implicit def kryoEncoder[A](implicit ct: ClassTag[A]) =
     org.apache.spark.sql.Encoders.kryo[A](ct)
 
 
   case class mbrs (mbrList: ListBuffer[mbr]) {
     def addMbr(input: Iterator[Row]): mbrs = {
-      var init = false
-      var maxX = 0.0
-      var minX = 0.0
-      var maxY = 0.0
-      var minY = 0.0
+      var maxX = -10000000.0
+      var minX = 10000000.0
+      var maxY = -10000000.0
+      var minY = 10000000.0
 
       input.foreach { elem =>
-        if(!init) {
-          maxX = elem.get(2).asInstanceOf[Double]
-          minX = elem.get(2).asInstanceOf[Double]
-          maxY = elem.get(3).asInstanceOf[Double]
-          minY = elem.get(3).asInstanceOf[Double]
-          init = true
-        }
         var x = elem.get(2).asInstanceOf[Double]
         var y = elem.get(3).asInstanceOf[Double]
 
         if (x > maxX)
           maxX = x
-        if(x <=minX)
+        if(minX > x)
           minX = x
         if(y > maxY)
           maxY = y
-        if(y < minY)
+        if(minY > y)
           minY = y
-
       }
-//      println( mbr(minX, maxX, minY, maxY).toString )
-      mbrList += mbr(minX, maxX, minY, maxY)
+      println( mbr(minX, minY, maxX, maxY).toString )
+      mbrList += mbr(minX, minY, maxX, maxY)
       this
     }
 
@@ -100,11 +92,14 @@ object Project {
 //    ds.printSchema()
 //    ds2.printSchema()
 
+    ds = ds.range(Array("x", "y"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0))
+
     ds.createOrReplaceTempView("trajectory")
 
     ds2.createOrReplaceTempView("poi")
 
     simba.indexTable("trajectory", RTreeType, "trajectoriesIndex",  Array("x", "y"))
+    ds = simba.sql("Select * from trajectory")
     val result = ds.toDF().mapPartitions(partition =>
       Iterator(mbrs(ListBuffer()).addMbr(partition))).reduce((x,y) => x.merge(y))
 //    println(result.mbrList.size)
@@ -121,6 +116,7 @@ object Project {
     //just a simple range suery on the trajectory with a like filter on description to find the restaurants
     simba.sql("Select * from poi").range(Array("x", "y"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0))
       .where("description LIKE \"%restaurant%\"").show()
+
   }
 
   private def question2 (simba: SimbaSession): Unit = {
