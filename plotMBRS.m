@@ -21,3 +21,10 @@ xlabel('x coordinate');
 ylabel('y coordinate');
 axis equal;
 title('Part 1: Points and MBRs with equal scaling per dimension');
+
+figure();
+scatter(rangedPoints(:,1),rangedPoints(:,2));
+xlabel('x coordinate');
+ylabel('y coordinate');
+axis equal;
+title('Part 1: Points without MBRs');
