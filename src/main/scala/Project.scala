@@ -16,18 +16,20 @@ object Project {
 
     val simbaSession = SimbaSession
       .builder()
-      .master("local[1]")
+      .master("local[*]")
       .appName("SparkSessionForSimba")
       .config("simba.index.partitions", "30")
       .getOrCreate()
 
+    //part one needs to always be run because it reads in the data and creates indexes for it. the rest of the parts
+    //are simply just the questions from part2. the last three questions also take a range for easy modification.
     part1(simbaSession)
-//    question1(simbaSession)
-//    question2(simbaSession)
-//    question3(simbaSession)
-    question4(simbaSession, 300.0)
+    question1(simbaSession)
+    question2(simbaSession)
+    question3(simbaSession)
+    question4(simbaSession, 100.0)
 //    part3Question5(simbaSession, 500)
-//    question5(simbaSession, 500.0)
+    question5(simbaSession, 100.0)
     simbaSession.stop()
     simbaSession.close()
   }
@@ -58,7 +60,7 @@ object Project {
           if (minY > y)
             minY = y
         }
-//        println(mbr(minX, minY, maxX, maxY).toString)
+        println(mbr(minX, minY, maxX, maxY).toString)
         mbrList += mbr(minX, minY, maxX, maxY)
       }
       this
@@ -76,6 +78,9 @@ object Project {
 
   private def part1(simba: SimbaSession): Unit = {
     import simba.simbaImplicits._
+    //some of the queries were not able to run efficiently at all because they used too much ram with the dataset.
+    //the index would build after upping the cap to 10g but question 4 would not run. So we trimmed the data
+    // approximatly 37% to allow for the queries to run.
     var ds = simba.read.option("inferSchema", "true").csv("/home/pgiorgianni/Downloads/tmp").limit(15000000)
     ds = ds.withColumnRenamed("_c0", "trajectoryIdentification")
     ds = ds.withColumnRenamed("_c1", "objectIdentification")
@@ -93,6 +98,7 @@ object Project {
 //    ds.printSchema()
 //    ds2.printSchema()
 
+    //to trim the data to get good looking mbrs you can uncomment these lines to trim the data and show the points that you have trimmed it down to
 //    ds = ds.range(Array("x", "y"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0)).limit(24000000)
 //    ds.show(2400000)
     ds.index( RTreeType, "trajectoriesIndex",  Array("x", "y"))
@@ -108,6 +114,7 @@ object Project {
       Iterator(mbrs(ListBuffer()).addMbr(partition))).reduce((x,y) => x.merge(y))
     simba.indexTable("poi", RTreeType, "poisIndex",  Array("x", "y") )
 
+    // we could not get the indexes to save and load properly.
     //    simba.loadIndex("poisIndex", "/home/pgiorgianni/Downloads/POIsIndex")
 //    simba.persistIndex("poisIndex", "/home/pgiorgianni/Downloads/POIsIndex")
   }
@@ -128,10 +135,11 @@ object Project {
       .circleRange(Array("x", "y"), Array(-322357.0, 4463408.0), 2000).select("objectIdentification", "dow",
       "Year", "week", "hour").distinct().cache()
     tmp.show(20)
-//    simba.sql("SELECT max(timeRead), min(timeRead) from trajectory where where date_format(timeRead, 'u') <= 5").show()
+    //count the number of unique people in each hour at the square
     var count = tmp.count()
-    //sort by unique hour and object to see how many objects are in the data
-    var days = tmp.select("dow", "Year", "week").distinct().count()
+    //grab the unique week days so that we know how many days data was recorded
+    var days = simba.sql("Select date_format(timeRead, 'u') as dow, date_format(timeRead, 'y') as Year," +
+      " date_format(timeRead, 'w') as week from trajectory where date_format(timeRead, 'u') <= 5").distinct().count()
     //output how many people were in the square divided by number of days * 24 hours that people were in the area
     println("days tracked: " + days)
     println("people/hours: " + count.asInstanceOf[Double]/(days * 24))
