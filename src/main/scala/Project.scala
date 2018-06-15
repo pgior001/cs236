@@ -16,7 +16,7 @@ object Project {
 
     val simbaSession = SimbaSession
       .builder()
-      .master("local[*]")
+      .master("local[1]")
       .appName("SparkSessionForSimba")
       .config("simba.index.partitions", "30")
       .getOrCreate()
@@ -25,8 +25,9 @@ object Project {
 //    question1(simbaSession)
 //    question2(simbaSession)
 //    question3(simbaSession)
-    question4(simbaSession)
-//    question5(simbaSession)
+    question4(simbaSession, 300.0)
+//    part3Question5(simbaSession, 500)
+//    question5(simbaSession, 500.0)
     simbaSession.stop()
     simbaSession.close()
   }
@@ -39,25 +40,27 @@ object Project {
 
   case class mbrs (mbrList: ListBuffer[mbr]) {
     def addMbr(input: Iterator[Row]): mbrs = {
-      var maxX = -10000000.0
-      var minX = 10000000.0
-      var maxY = -10000000.0
-      var minY = 10000000.0
-      while(input.hasNext){
-        val elem = input.next()
-        val x = elem.getDouble(2)
-        val y = elem.getDouble(3)
-        if (x > maxX)
-          maxX = x
-        if(minX > x)
-          minX = x
-        if(y > maxY)
-          maxY = y
-        if(minY > y)
-          minY = y
+      var maxX = Double.MinValue
+      var minX = Double.MaxValue
+      var maxY = Double.MinValue
+      var minY = Double.MaxValue
+      this.synchronized {
+        while (input.hasNext) {
+          val elem = input.next()
+          val x = elem.getDouble(2)
+          val y = elem.getDouble(3)
+          if (x > maxX)
+            maxX = x
+          if (minX > x)
+            minX = x
+          if (y > maxY)
+            maxY = y
+          if (minY > y)
+            minY = y
+        }
+//        println(mbr(minX, minY, maxX, maxY).toString)
+        mbrList += mbr(minX, minY, maxX, maxY)
       }
-//      println( mbr(minX, minY, maxX, maxY).toString )
-      mbrList += mbr(minX, minY, maxX, maxY)
       this
     }
 
@@ -73,7 +76,7 @@ object Project {
 
   private def part1(simba: SimbaSession): Unit = {
     import simba.simbaImplicits._
-    var ds = simba.read.option("inferSchema", "true").csv("/home/pgiorgianni/Downloads/trajectories.csv")
+    var ds = simba.read.option("inferSchema", "true").csv("/home/pgiorgianni/Downloads/tmp").limit(15000000)
     ds = ds.withColumnRenamed("_c0", "trajectoryIdentification")
     ds = ds.withColumnRenamed("_c1", "objectIdentification")
     ds = ds.withColumnRenamed("_c2", "x")
@@ -90,8 +93,8 @@ object Project {
 //    ds.printSchema()
 //    ds2.printSchema()
 
-    ds = ds.range(Array("x", "y"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0)).limit(240000)
-//    ds.show(24000)
+//    ds = ds.range(Array("x", "y"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0)).limit(24000000)
+//    ds.show(2400000)
     ds.index( RTreeType, "trajectoriesIndex",  Array("x", "y"))
 
     ds.createOrReplaceTempView("trajectory")
@@ -99,9 +102,11 @@ object Project {
     ds2.createOrReplaceTempView("poi")
 
 //    simba.indexTable("trajectory", RTreeType, "trajectoriesIndex",  Array("x", "y"))
-//    val result = ds.mapPartitions(partition =>
-//      Iterator(mbrs(ListBuffer()).addMbr(partition))).reduce((x,y) => x.merge(y))
-//    simba.indexTable("poi", RTreeType, "poisIndex",  Array("x", "y") )
+    ds.cache()
+    ds2.cache()
+    val result = ds.mapPartitions(partition =>
+      Iterator(mbrs(ListBuffer()).addMbr(partition))).reduce((x,y) => x.merge(y))
+    simba.indexTable("poi", RTreeType, "poisIndex",  Array("x", "y") )
 
     //    simba.loadIndex("poisIndex", "/home/pgiorgianni/Downloads/POIsIndex")
 //    simba.persistIndex("poisIndex", "/home/pgiorgianni/Downloads/POIsIndex")
@@ -158,14 +163,32 @@ object Project {
     println("end in different: " + (selected - totalPoints))
   }
 
-  def question4(simba : SimbaSession) : Unit ={
+  def question4(simba : SimbaSession, range: Double) : Unit ={
+    var start = System.currentTimeMillis()
     import simba.simbaImplicits._
     var df = simba.sql("Select x,y from trajectory where date_format(timeRead,'m') <=  6 and date_format(timeRead,'m') >= 2")
     var df2 = simba.sql("Select x as x1,y as y1 from trajectory where date_format(timeRead,'m') <=  6 and date_format(timeRead,'m') >= 2").distinct()
-    df2.distanceJoin(df,Array("x1","y1"),Array("x","y"),20.0).groupBy("x1","y1").count().sort(desc("count")).limit(20).show()
+    df2.distanceJoin(df,Array("x1","y1"),Array("x","y"),range).groupBy("x1","y1").count().sort(desc("count")).limit(20).show()
+    var end = System.currentTimeMillis()
+    println("question 4 range of: " + range + " took " + (end - start))
   }
 
-  def question5(simba : SimbaSession) : Unit ={
+  def part3Question5(simba : SimbaSession, range: Double) : Unit ={
+    import simba.simbaImplicits._
+    var start = System.currentTimeMillis()
+    //gets the values of each dataset and does some filtering for weekdays
+    var poi = simba.sql("Select x as poix, y as poiy, objectIdentification as id from poi")
+    var trajectories = simba.sql("Select x, y, objectIdentification, date_format(timeRead, 'M') as Month," +
+      " date_format(timeRead, 'y') as year from trajectory where where date_format(timeRead, 'u') <= 5 and " +
+      "(date_format(timeRead, 'y') = 2008 or date_format(timeRead, 'y') = 2009)")
+    //joins the sets where they are x distance appart then groups them by point and sorts them to count
+    var solution = poi.distanceJoin(trajectories, Array("poix", "poiy"), Array("x", "y"), range).select("id",
+      "Month", "year").distinct().groupBy("id", "month").count().sort(desc("count")).select("id").show()
+    var end = System.currentTimeMillis()
+    println("question 5 range of: " + range + " took " + (end - start))
+  }
+
+  def question5(simba : SimbaSession, range: Double) : Unit ={
     import simba.simbaImplicits._
     //gets the values of each dataset and does some filtering for weekdays
     var poi = simba.sql("Select x as poix, y as poiy, objectIdentification as id from poi")
@@ -173,7 +196,7 @@ object Project {
       " date_format(timeRead, 'y') as year from trajectory where where date_format(timeRead, 'u') <= 5 and " +
       "(date_format(timeRead, 'y') = 2008 or date_format(timeRead, 'y') = 2009)")
     //joins the sets where they are x distance appart then groups them by point and sorts them to count
-    var solution = poi.distanceJoin(trajectories, Array("poix", "poiy"), Array("x", "y"), 100).select("id",
+    var solution = poi.distanceJoin(trajectories, Array("poix", "poiy"), Array("x", "y"), range).select("id",
       "Month", "year").distinct().cache()//.groupBy("poix", "poiy").count().sort(desc("count")).limit(20)
     var twoThousandAnd8 = solution.where("year = 2008").groupBy("id", "month").count().sort(desc("count")).select("id").cache()
     println("January 2008")
