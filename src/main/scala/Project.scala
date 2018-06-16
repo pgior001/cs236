@@ -81,14 +81,14 @@ object Project {
     //some of the queries were not able to run efficiently at all because they used too much ram with the dataset.
     //the index would build after upping the cap to 10g but question 4 would not run. So we trimmed the data
     // approximatly 37% to allow for the queries to run.
-    var ds = simba.read.option("inferSchema", "true").csv("/home/pgiorgianni/Downloads/tmp").limit(15000000)
+    var ds = simba.read.option("inferSchema", "true").csv("trajectories.csv").limit(15000000)
     ds = ds.withColumnRenamed("_c0", "trajectoryIdentification")
     ds = ds.withColumnRenamed("_c1", "objectIdentification")
     ds = ds.withColumnRenamed("_c2", "x")
     ds = ds.withColumnRenamed("_c3", "y")
     ds = ds.withColumnRenamed("_c4", "timeRead")
 
-    var ds2 = simba.read.option("inferSchema", "true").csv("/home/pgiorgianni/Downloads/POIs.csv")
+    var ds2 = simba.read.option("inferSchema", "true").csv("POIs.csv")
 
     ds2 = ds2.withColumnRenamed("_c0", "objectIdentification")
     ds2 = ds2.withColumnRenamed("_c1", "description")
@@ -115,8 +115,8 @@ object Project {
     simba.indexTable("poi", RTreeType, "poisIndex",  Array("x", "y") )
 
     // we could not get the indexes to save and load properly.
-    //    simba.loadIndex("poisIndex", "/home/pgiorgianni/Downloads/POIsIndex")
-//    simba.persistIndex("poisIndex", "/home/pgiorgianni/Downloads/POIsIndex")
+    //    simba.loadIndex("poisIndex", "POIsIndex")
+//    simba.persistIndex("poisIndex", "POIsIndex")
   }
 
   private def question1 (simba: SimbaSession): Unit = {
