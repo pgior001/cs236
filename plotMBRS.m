@@ -23,8 +23,22 @@ axis equal;
 title('Part 1: Points and MBRs with equal scaling per dimension');
 
 figure();
+hold on;
+for i = 1:size(r,1)
+    x = [r(i,1); r(i,1); r(i,3); r(i,3)];
+    y = [r(i,2); r(i,4); r(i,4); r(i,2)];
+    a = patch(x,y,'g');
+    a.FaceAlpha = 0.2;
+end
+xlabel('x coordinate');
+ylabel('y coordinate');
+axis equal;
+title('Part 1: MBRs only');
+
+
+figure();
 scatter(rangedPoints(:,1),rangedPoints(:,2));
 xlabel('x coordinate');
 ylabel('y coordinate');
 axis equal;
-title('Part 1: Points without MBRs');
+title('Part 1: Points only');

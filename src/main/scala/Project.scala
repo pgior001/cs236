@@ -24,12 +24,12 @@ object Project {
     //part one needs to always be run because it reads in the data and creates indexes for it. the rest of the parts
     //are simply just the questions from part2. the last three questions also take a range for easy modification.
     part1(simbaSession)
-//    question1(simbaSession)
-//    question2(simbaSession)
-//    question3(simbaSession)
-//    question4(simbaSession, 100.0)
-        part3Question5(simbaSession, 500)
-//    question5(simbaSession, 100.0)
+    question1(simbaSession)
+    question2(simbaSession)
+    question3(simbaSession)
+    question4(simbaSession, 100.0)
+//        part3Question5(simbaSession, 500)
+    question5(simbaSession, 100.0)
     simbaSession.stop()
     simbaSession.close()
   }
@@ -88,7 +88,7 @@ object Project {
     ds = ds.withColumnRenamed("_c3", "y")
     ds = ds.withColumnRenamed("_c4", "timeRead")
 
-    var ds2 = simba.read.option("inferSchema", "true").csv("/home/pgiorgianni/Downloads/POIs.csv")
+    var ds2 = simba.read.option("inferSchema", "true").csv("POIs.csv")
 
     ds2 = ds2.withColumnRenamed("_c0", "objectIdentification")
     ds2 = ds2.withColumnRenamed("_c1", "description")
@@ -99,8 +99,8 @@ object Project {
 //    ds2.printSchema()
 
     //to trim the data to get good looking mbrs you can uncomment these lines to trim the data and show the points that you have trimmed it down to
-//    ds = ds.range(Array("x", "y"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0)).limit(24000000)
-//    ds.show(2400000)
+    //ds = ds.range(Array("x", "y"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0)).limit(2400000)
+    //ds.show(2400000)
     ds.index( RTreeType, "trajectoriesIndex",  Array("x", "y"))
 
     ds.createOrReplaceTempView("trajectory")
@@ -115,8 +115,8 @@ object Project {
     simba.indexTable("poi", RTreeType, "poisIndex",  Array("x", "y") )
 
     // we could not get the indexes to save and load properly.
-    //    simba.loadIndex("poisIndex", "/home/pgiorgianni/Downloads/POIsIndex")
-//    simba.persistIndex("poisIndex", "/home/pgiorgianni/Downloads/POIsIndex")
+    //    simba.loadIndex("poisIndex", "POIsIndex")
+//    simba.persistIndex("poisIndex", "POIsIndex")
   }
 
   private def question1 (simba: SimbaSession): Unit = {
@@ -157,7 +157,6 @@ object Project {
       " Inner Join trajectory as tt on t.trajectoryIdentification = tt.trajectoryIdentification and (tt.timeRead = t.max or tt.timeRead = t.min)")
       .range(Array("x", "y"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0))
     tmp.show()
-    //he would prefer us to take the centroids of the involved points.
     //counts the number of points that have start and end in the range
     var totalPoints = tmp.groupBy("trajectoryIdentification").count().where("count = 2").count()
     //counts the number of points in each rectangle

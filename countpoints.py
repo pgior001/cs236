@@ -23,8 +23,6 @@ with open('pts','r') as f:
       y = float(p[4])
       print([x,y])
       for m in mbrlist:
-        print(m)
-        sys.exit(0) 
         if((m[0] <= x) and (m[2] >= x) and (m[1] <= y) and (m[3] >= y)):
            pt = True
       if(pt is False):
