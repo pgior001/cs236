@@ -1,0 +1,35 @@
+
+Our findings may be reproduced as follows.
+To see the results of Part 1 and Part 2 printed to screen, make sure SPARK_HOME is set to the location of folderspark. It was tested with Spark 2.1.0 and Scala version 2.11 on Centos 7 running the GNOME desktop environment. Python 2.7+ is also required, and Matlab is needed to make the plots.
+
+Use the following from the project's home folder. You must correctly set the SPARK_HOME environment variable.
+
+
+sbt - package
+
+cp target/scala-2.11/test_2.11-1.0.jar ${SPARK_HOME}/jars 
+
+spark-submit --class Project ${SPARK_HOME}/jars/test_2.11-1.0.jar
+
+For Part 3, comment out everything but part3Question5 in src/main/scala/Project.scala, which is line 31 as of the time of writing this. Then run the commands listed above to submit the job to spark.
+
+If you want to re-run the results from Part 3, uncomment the part3Question5 line, line 31 in Project.scala.  
+If you want to reproduce the plots from part 1, comment out lines 27 through 32. Leave the line part1(simbaSession). Redirect output to a file. 
+
+Place the lines containing MBRs in a text file entitled "mbrs". These will be the last 30 or so lines at the end of the output.
+Place the lines containing points in a file entitled "rangedPoints".
+
+Exclude any lines containing header information. 
+
+Type
+
+python cleanRangedPoints.py
+
+The manual steps are the ones we couldn't automate. They are mentioned in the problems encountered portion of the report.
+
+To regenerate the Part 1 plots, start Matlab. cd to the current folder in Matlab.
+
+type plotMBRS 
+
+
+
