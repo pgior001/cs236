@@ -12,6 +12,7 @@ cp target/scala-2.11/test_2.11-1.0.jar ${SPARK_HOME}/jars
 spark-submit --class Project ${SPARK_HOME}/jars/test_2.11-1.0.jar
 
 For Part 3, comment out everything but part3Question5, and question4 (this will take multiple runs changing the range passed into the funtction) in src/main/scala/Project.scala, which is line 31 as of the time of writing this. Then run the commands listed above to submit the job to spark.
+If spark cannot find a particular jar file and throws an exception, you may need to copy that file to ${SPARK_HOME}/jars/
 
 If you want to re-run the results from Part 3, uncomment the part3Question5 line, line 31 in Project.scala.  
 If you want to reproduce the plots from part 1, comment out lines 27 through 32i and remove the limit on the imort of the trajectories file. Leave the line part1(simbaSession). Redirect output to a file. 
