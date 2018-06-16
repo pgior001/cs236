@@ -99,8 +99,8 @@ object Project {
 //    ds2.printSchema()
 
     //to trim the data to get good looking mbrs you can uncomment these lines to trim the data and show the points that you have trimmed it down to
-//    ds = ds.range(Array("x", "y"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0)).limit(24000000)
-//    ds.show(2400000)
+    //ds = ds.range(Array("x", "y"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0)).limit(2400000)
+    //ds.show(2400000)
     ds.index( RTreeType, "trajectoriesIndex",  Array("x", "y"))
 
     ds.createOrReplaceTempView("trajectory")
