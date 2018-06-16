@@ -157,7 +157,6 @@ object Project {
       " Inner Join trajectory as tt on t.trajectoryIdentification = tt.trajectoryIdentification and (tt.timeRead = t.max or tt.timeRead = t.min)")
       .range(Array("x", "y"),Array(-339220.0,  4444725),Array(-309375.0, 4478070.0))
     tmp.show()
-    //he would prefer us to take the centroids of the involved points.
     //counts the number of points that have start and end in the range
     var totalPoints = tmp.groupBy("trajectoryIdentification").count().where("count = 2").count()
     //counts the number of points in each rectangle
