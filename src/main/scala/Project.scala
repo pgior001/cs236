@@ -16,7 +16,7 @@ object Project {
 
     val simbaSession = SimbaSession
       .builder()
-      .master("local[*]")
+      .master("local[1]")
       .appName("SparkSessionForSimba")
       .config("simba.index.partitions", "30")
       .getOrCreate()
@@ -24,12 +24,12 @@ object Project {
     //part one needs to always be run because it reads in the data and creates indexes for it. the rest of the parts
     //are simply just the questions from part2. the last three questions also take a range for easy modification.
     part1(simbaSession)
-    question1(simbaSession)
-    question2(simbaSession)
-    question3(simbaSession)
-    question4(simbaSession, 100.0)
-//    part3Question5(simbaSession, 500)
-    question5(simbaSession, 100.0)
+//    question1(simbaSession)
+//    question2(simbaSession)
+//    question3(simbaSession)
+//    question4(simbaSession, 100.0)
+        part3Question5(simbaSession, 500)
+//    question5(simbaSession, 100.0)
     simbaSession.stop()
     simbaSession.close()
   }
@@ -81,7 +81,7 @@ object Project {
     //some of the queries were not able to run efficiently at all because they used too much ram with the dataset.
     //the index would build after upping the cap to 10g but question 4 would not run. So we trimmed the data
     // approximatly 37% to allow for the queries to run.
-    var ds = simba.read.option("inferSchema", "true").csv("/home/pgiorgianni/Downloads/tmp").limit(15000000)
+    var ds = simba.read.option("inferSchema", "true").csv("/home/pgiorgianni/Downloads/trajectories.csv").limit(7500000)
     ds = ds.withColumnRenamed("_c0", "trajectoryIdentification")
     ds = ds.withColumnRenamed("_c1", "objectIdentification")
     ds = ds.withColumnRenamed("_c2", "x")
